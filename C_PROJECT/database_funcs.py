@@ -1,4 +1,6 @@
 import sqlite3
+import datetime
+
 
 SQL_SCHEMA = """
 PRAGMA foreign_keys = ON;  -- Ensure foreign key enforcement
@@ -117,6 +119,7 @@ CREATE TABLE IF NOT EXISTS arrears (
 -- Group Accounts Table
 CREATE TABLE IF NOT EXISTS group_accounts (
     account_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_number INTEGER NOT NULL,
     name TEXT NOT NULL,
     created DATE,
     balance REAL CHECK(balance > 0) NOT NULL,
@@ -287,6 +290,21 @@ def get_member_details(cursor, member_id):
 
     return member_details
 
+def add_group_account(cursor, account_number, name, created, balance, description=""):
+    """Add a new group account to the group_accounts table."""
+    try:
+        account_query = """
+        INSERT INTO group_accounts (account_number, name, created, balance, description)
+        VALUES (?, ?, ?, ?, ?)
+        """
+        cursor.execute(account_query, (account_number, name, created, balance, description))
+        print("Account Successfully created!!")
+        return cursor.lastrowid  # Return the new account's ID
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+        return None
+    
+    
 def get_all_members_with_contacts(cursor):
     """Fetch all members with their associated contacts efficiently."""
     
@@ -320,7 +338,7 @@ def get_all_members_with_contacts(cursor):
 
 
 VALID_TABLES = {"members", "group_contacts", "meetings", "attendance", "proposals",
-                "contributions", "loans", "arrears", "transactions", "tasks", "messages"}
+                "group_accounts","contributions", "loans", "arrears", "transactions", "tasks", "messages"}
 
 def get_table_as_object(cursor, table_name):
     """Fetch all records from a table safely and return them as objects."""
@@ -596,6 +614,7 @@ def get_member_by_name(cursor, name):
   
 
 from pprint import pprint
+from datetime import datetime
 
 def add_test_data_to_db(connection,crs):
     try:
